@@ -1,0 +1,79 @@
+# ===== General ===== #
+seed: 0                           # Global RNG seed (torch / numpy / python) for reproducibility
+name: ft_scaling_linear_regression  # Experiment name; used to form run directory path(s)
+device: cpu                       # 'cpu' or CUDA device string like 'cuda:0'
+
+# ===== Dataset ===== #
+data: gaussian                    # Data sampler name used by get_data_sampler(...)
+data_sampler_args: {}             # Extra kwargs forwarded to the data sampler
+batch_size: 64                    # One batch size for train/val/test stream loaders
+normalized: False                 # If True, inputs are normalized (e.g., to [-0.7, 0.7]) in the dataset
+splits:                           # Stream buffer config per split (buffer = batch_size * n_batches)
+    train: { n_batches: 16, shuffle: true  }   # Shuffle buffer for training
+    val:   { n_batches: 16, shuffle: false }   # Usually keep validation deterministic
+    test:  { n_batches: 16, shuffle: false }   # Usually keep test deterministic
+task: scaling_linear_regression     # Task name used by get_task_sampler(...)
+task_kwargs:
+    linear_scale: 1.0             # Task-specific argument (here: output scaling)
+    global_scale: 0.1             # An additional scaling applied to all function weights
+curriculum:                       # Curriculum updated during training by the loader (per step)
+    dims:                         # Controls n_dims_truncated (active feature dims)
+        start: 20                 # Start value at step 0
+        end: 20                   # Maximum value to clamp to
+        inc: 1                    # Increment applied every `interval` steps
+        interval: 2000            # Number of training steps between increments
+    points:                       # Controls n_points (sequence length / #context points)
+        start: 41
+        end: 41
+        inc: 2
+        interval: 2000
+
+# ===== Training ===== #
+only_inference: False             # If True, skip training and only run evaluation
+trainer: backpropagation_trainer  # Choose between backpropagation_trainer or adaprune_trainer
+train_steps: 40001                # Total gradient steps for training (step-based, no epochs)
+val_steps: 10                     # #batches to consume from val loader per validation run
+test_steps: 1000                  # #batches to consume from test loader at the end
+validate_every_steps: 1000        # Run validation every N training steps (0 disables)
+
+optimizer: "adam"                 # Optimizer type for backprop trainer ('adam', 'sgd', etc.)
+lr: 1e-4                          # Base learning rate
+weight_decay: 1e-4                # L2 weight decay
+momentum: 0.95                    # Used for momentum-based optimizers (e.g., SGD)
+nesterov: False                   # Whether to enable Nesterov momentum (SGD)
+max_grad_norm: 1.0                # Gradient clipping threshold (0 disables)
+
+lr_scheduler: "cosine"            # LR schedule type ('cosine', 'step', 'plateau', etc.)
+min_lr: 0                         # Floor LR for schedulers that support it (e.g., cosine)
+
+amp_scaler: False                 # Enable mixed precision (GradScaler) if True and CUDA available
+early_stopping_cfg: {patience: 0, min_delta: 0.0}  # Early stop on val loss; 0 patience disables
+
+# ===== Loss fn ===== #
+criterion: "mse"                  # Loss function identifier used by get_criterion(...)
+
+# ===== Testing ===== #
+test_metric: "mse"                # Metric identifier used by get_test_metric(...)
+
+# ===== Architecture ===== #
+model:
+    family: gpt2                  # Model family / backbone
+    n_embd: 256                   # Embedding (hidden) size
+    n_layer: 12                   # Number of transformer blocks
+    n_head: 8                     # Attention heads
+    n_dims: 20                    # Maximum input dimensionality (sampler runs at this; dataset truncates)
+    n_positions: 101              # Max context length supported by the model
+    save_path: "./results/linear_regression_pretrained/state.pt"   # Path to pretrained model
+    linear_probe: False           # Whether only the weights of the output head(s) should be adapted
+
+# ===== Logging and Checkpointing ===== #
+log: True                         # If True, create run directories and write logs
+log_every_steps: 10               # Print/log training info every N steps
+save_every_steps: 1000            # Write checkpoints every N steps (0 disables periodic saves)
+resume_ckpt: null                 # Path to a checkpoint file or directory to resume from (null = fresh)
+out_dir: ../results/logs/ft_scaling_linear_regression  # Base folder where runs are created (…/run0, run1, …)
+
+
+
+
+
