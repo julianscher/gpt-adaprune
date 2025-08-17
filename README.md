@@ -165,10 +165,13 @@ You can download a pretrained GPT-2 model for the linear_regression task from th
 Or download directly with:
 
 ```bash
-wget https://github.com/julianscher/gpt-adaprune/releases/download/v1.0.0/model_state_dict.pt
+wget https://github.com/julianscher/gpt-adaprune/releases/download/v1.0.0/linear_regression_pretrained.zip
 ```
 
-Add the downloaded file to the ```results/linear_regression_pretrained/``` folder as shown in the repository structure above.
+Add the downloaded folder to the results folder (```results/linear_regression_pretrained/```) as shown in the repository structure above. 
+If the results folder does not exist, create a new one or run your first experiment.
+
+---
 
 ## Extending
 
